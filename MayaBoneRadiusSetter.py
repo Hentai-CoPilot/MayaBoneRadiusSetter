@@ -19,13 +19,36 @@ def set_radius_for_hierarchy(joint, radius_value=1.0):
             # 再帰的に子ジョイントに半径を適用
             set_radius_for_hierarchy(child, radius_value)
 
-# 選択されたジョイントをフルパス名で取得
-selected_objects = cmds.ls(selection=True, type='joint', long=True)
+def apply_radius(*args):
+    # スライダーの値を取得
+    radius_value = cmds.floatSliderGrp(slider, query=True, value=True)
+    
+    # 選択されたジョイントをフルパス名で取得
+    selected_objects = cmds.ls(selection=True, type='joint', long=True)
+    
+    # ジョイントが選択されているか確認
+    if selected_objects:
+        for joint in selected_objects:
+            # 親ジョイントとその階層に半径を適用
+            set_radius_for_hierarchy(joint, radius_value)
+    else:
+        cmds.warning("ジョイントが選択されていません。親ジョイントを選択してください。")
 
-# ジョイントが選択されているか確認
-if selected_objects:
-    for joint in selected_objects:
-        # 親ジョイントとその階層に半径を適用
-        set_radius_for_hierarchy(joint, radius_value=0.1)
-else:
-    cmds.warning("ジョイントが選択されていません。親ジョイントを選択してください。")
+# ウィンドウが存在する場合は削除
+if cmds.window("radiusWindow", exists=True):
+    cmds.deleteUI("radiusWindow", window=True)
+
+# ウィンドウの作成
+window = cmds.window("radiusWindow", title="Set Joint Radius", widthHeight=(300, 100))
+
+# レイアウト
+cmds.columnLayout(adjustableColumn=True)
+
+# スライダーの作成 (最大値10、ステップ0.1) - 値が変更されたらapply_radiusを呼び出す
+slider = cmds.floatSliderGrp(field=True, minValue=0.01, maxValue=10, value=1.0, step=0.01, dragCommand=apply_radius)
+
+# Applyボタンの作成
+cmds.button(label="Apply", command=apply_radius)
+
+# ウィンドウの表示
+cmds.showWindow(window)
